@@ -4,11 +4,22 @@
  * Module dependencies.
  */
 
-var app = require('../app');
-var debug = require('debug')('grahil-js:server');
-var http = require('http');
+const logger = require('../logging_setup');
 const ws = require('ws');
+var app = require('../app');
+var http = require('http');
+var debug = require('debug')('grahil-js:server');
 var WsHandler = require('../routes/wshandler');
+
+
+logger.debug('ready');
+
+
+/**
+ * Initialize core application class and save reference
+ */
+const NodeApplication = require('../modules/application');
+var nodeapp = app.get('application');
 
 
 /**
@@ -29,7 +40,7 @@ var server = http.createServer(app);
   Listening fotr websocket request
 */
 var wsServer = new ws.Server({ noServer: true });
-const wsHandler = new WsHandler(wsServer);
+const wsHandler = new WsHandler(wsServer, nodeapp);
 
 
 
@@ -45,13 +56,6 @@ server.on('upgrade', (request, socket, head) => {
     wsServer.emit('connection', socket, request);
   });
 });
-
-
-/* 
-Listen for websockets
-*/
-
-
 
 
 /**
@@ -90,11 +94,11 @@ function onError(error) {
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
+      logger.error(bind + ' requires elevated privileges');
       process.exit(1);
       break;
     case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
+      logger.error(bind + ' is already in use');
       process.exit(1);
       break;
     default:
