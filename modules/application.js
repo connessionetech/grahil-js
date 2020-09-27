@@ -1,6 +1,9 @@
 // node_application.js
 'use strict';
 
+const logger = require('../logging_setup');
+const Configuration = require('./configurations');
+
 module.exports = class Nodeapplication {
 
     constructor(config) {

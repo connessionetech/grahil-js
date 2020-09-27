@@ -14,7 +14,7 @@ class Pinger{
         this.__date = new Date();
     }
 
-    get callback(self){
+    get callback(){
         return this.__callback
     }
     
@@ -23,7 +23,7 @@ class Pinger{
     }
     
     
-    __generatePing(self){
+    __generatePing(){
         var ping = this.__date.getUTCMilliseconds();
         if(this.__callback){
             this.__callback(ping);
@@ -83,18 +83,18 @@ class PubSubHub{
 
 
     get notifyable(){
-        return self.__notifyable;
+        return this.__notifyable;
     }
         
     
     set notifyable(__notifyable){
-        self.__notifyable = __notifyable;
+        this.__notifyable = __notifyable;
     }
 
 
     _initialize(){
 
-        var pubsub_channels = self.__config["topics"];
+        var pubsub_channels = this.__config["topics"];
 
         pubsub_channels.forEach(function (channel_info) {
             var topicname = channel_info["name"];
@@ -108,8 +108,8 @@ class PubSubHub{
 
 
     subscribe(topicname, client){
-        if(!(topicname in self.channels)){
-            if(self.__config["allow_dynamic_topics"] == True){
+        if(!(topicname in this.channels)){
+            if(this.__config["allow_dynamic_topics"] == True){
                 var channel_info = {}
                 channel_info["name"] = topicname ;
                 channel_info['type'] = "bidirectional"
@@ -120,7 +120,7 @@ class PubSubHub{
                 logger.error("Topic channel " + topicname + " does not exist and cannot be created either");
             }
         }else{
-            var clients = self.channels[topicname]['subscribers'];
+            var clients = this.channels[topicname]['subscribers'];
             clients.add(client);
             logger.info("Total clients in " + topicname + " = " + clients.size);
         }
@@ -142,13 +142,13 @@ class PubSubHub{
         Client unsubscribes from topic
     **/
     unsubscribe(topicname, client){
-        if(topicname in self.channels){
-            var clients = self.channels[topicname]['subscribers'];
+        if(topicname in this.channels){
+            var clients = this.channels[topicname]['subscribers'];
             clients.delete(client);
             logger.info("Total clients in " + topicname + " = " + clients.size);
             
             if (clients.size == 0 && this.is_dynamic_channel(topicname)){
-                self.removeChannel(topicname);
+                this.removeChannel(topicname);
             }
         }
     }
@@ -158,7 +158,7 @@ class PubSubHub{
         clear all subscriptions
     **/
     clearsubscriptions(client){
-        Object.keys(self.channels).forEach(function(key) {
+        Object.keys(this.channels).forEach(function(key) {
             logger.info("Clearing client subscription in topic " + key)
             this.unsubscribe(key, client);
         });
@@ -171,15 +171,15 @@ class PubSubHub{
     **/
    
     createChannel(channel_info){
-        if(("name" in channel_info) && !(channel_info["name"] in self.channels)){
+        if(("name" in channel_info) && !(channel_info["name"] in this.channels)){
             topicname = channel_info["name"];
             topictype = channel_info["type"];
             queuesize = channel_info["queue_size"];
             max_users = channel_info["max_users"];
             logger.info("Registering channel " +  topicname);
-            self.channels[topicname] = {'name': topicname, 'type' : topictype, 'queue_size' : queuesize, 'msg_queue' : new Queue(), 'subscribers' : new Set(), 'max_users' : max_users};
+            this.channels[topicname] = {'name': topicname, 'type' : topictype, 'queue_size' : queuesize, 'msg_queue' : new Queue(), 'subscribers' : new Set(), 'max_users' : max_users};
             logger.debug("Activating message flush for topic " +  topicname)
-            //tornado.ioloop.IOLoop.current().spawn_callback(self.__flush_messages, topicname)
+            //tornado.ioloop.IOLoop.current().spawn_callback(this.__flush_messages, topicname)
             // start background [processing of message queue]
         }
     }
@@ -190,10 +190,10 @@ class PubSubHub{
     **/
    removeChannel(topicname){
 
-    Object.keys(self.channels).forEach(function(topicname) {
+    Object.keys(this.channels).forEach(function(topicname) {
         if(k == topicname){
-            delete self.channels[topicname];
-            //self.logger.info("Removed channel %s", topicname)
+            delete this.channels[topicname];
+            logger.info("Removed channel "  + topicname);
         }
     });
     }
@@ -203,8 +203,8 @@ class PubSubHub{
         Accepts data submission for topic
     **/
     __submit(topicname, message){
-        if(topicname in self.channels){
-            msgque = self.channels[topicname]['msg_queue'];
+        if(topicname in this.channels){
+            msgque = this.channels[topicname]['msg_queue'];
             msgque.enqueue(message); // put message in queue
         }
     }
@@ -217,20 +217,20 @@ class PubSubHub{
         parameter `allow_dynamic_topic`
     **/
     publish(topicname, message, client=undefined){
-        if(!(topicname in self.channels)){
-            if(self.__config["allow_dynamic_topics"] == true){
+        if(!(topicname in this.channels)){
+            if(this.__config["allow_dynamic_topics"] == true){
                 channel_info = {}
                 channel_info["name"] = topicname  
                 channel_info['type'] = "bidirectional"
                 channel_info["queue_size"] = 1
                 channel_info["max_users"]  = 0
-                self.createChannel(channel_info)
-                self.__submit(topicname, message)
+                this.createChannel(channel_info)
+                this.__submit(topicname, message)
             } else {
-                self.logger.error("Topic channel does not exist and cannot be created either")
+                this.logger.error("Topic channel does not exist and cannot be created either")
             }
         } else {
-            self.__submit(topicname, message)
+            this.__submit(topicname, message)
         }
     }
 
@@ -276,11 +276,11 @@ class PubSubHub{
     /*
         Activate auto message flush for all channels
     */
-    activate_message_flush(self){
-        Object.keys(self.channels).forEach(function(topic) {
+    activate_message_flush(){
+        Object.keys(this.channels).forEach(function(topic) {
             logger.debug("Activating message flush for topic " + topic)
-            //tornado.ioloop.IOLoop.current().spawn_callback(self.__flush_messages, topic)
-        }
+            //tornado.ioloop.IOLoop.current().spawn_callback(this.__flush_messages, topic)
+        });
     }    
 }
 
